@@ -6,7 +6,7 @@ enum Optional[+A]:
 
 def fold[A, B](a: Optional[A], z: B, f: (B, A) => B) =
   a match {
-    case Optional.None => z
+    case Optional.None    => z
     case Optional.Some(x) => f(z, x)
   }
 
@@ -60,10 +60,5 @@ enum RecEntry[A]:
   case Flat(a: A)
   case Nested(as: List[RecEntry[A]])
 
-// NOTE: do not use this to demo the results.
-// Use unit-tests instead
 @main def run() =
   println("Hello")
-
-
-
