@@ -1,64 +1,145 @@
-package com.tkroman.kpi.y2022.l1
-
-enum Optional[+A]:
-  case None
-  case Some(x: A)
-
-def fold[A, B](a: Optional[A], z: B, f: (B, A) => B) =
-  a match {
-    case Optional.None    => z
-    case Optional.Some(x) => f(z, x)
-  }
-
-enum Tree[+A]:
-  case Branch(l: Tree[A], r: Tree[A])
-  case Leaf(a: A)
-
-enum Set[+A]:
-  case Empty
-  case NonEmpty private (a: A, rest: Set[A])
-object Set:
-  def makeSet[A](xs: A*): Set[A] = ???
-
-case class Bag[A] private (private val map: Map[A, Int])
-object Bag:
-  def makeBag[A](xs: A*): Bag[A] = ???
-
-// https://en.wikipedia.org/wiki/Binary_search_tree
-case class BSTree private (l: Option[BSTree], r: Option[BSTree], v: Int)
-object BSTree:
-  def makeBst(xs: Int*): BSTree = ???
-
-enum List[+A]:
-  case Nil
-  case Cons(hd: A, tl: List[A])
-
-enum IntOpCode:
-  case Add, Mul
-
-enum BoolOpCode:
-  case And, Or
-
-enum IntExpr:
-  case Lit(n: Int)
-  case Op(opCode: IntOpCode, l: IntExpr, r: IntExpr)
-
-enum BoolExpr:
-  case Lit(b: Boolean)
-  case Op(opCode: BoolOpCode, l: BoolExpr, r: BoolExpr)
-
-enum Nat:
-  case Zero
-  case Succ(n: Nat)
-
-case class Rational(num: Int, denom: Int)
-
+package Lst
+import scala.math._
+import scala.compiletime.ops.string
 enum Compared:
-  case Lt, Gt, Eq // < > =
+  case Lt, Gt, Eq
 
-enum RecEntry[A]:
-  case Flat(a: A)
-  case Nested(as: List[RecEntry[A]])
+enum Lst[+A]:
+  case Nil
+  case Cns(head: A, tail: Lst[A])
 
-@main def run() =
-  println("Hello")
+  override def toString: String =
+    def rec(sb: StringBuilder, as: Lst[A]): String =
+      as match
+        case Nil =>
+          sb.append("]").result
+        case Cns(h, t) =>
+          rec(
+            sb
+              .append(h)
+              .append(if t == Nil then "" else ", "),
+            t
+          )
+    rec(new StringBuilder("["), this)
+
+  def len: Int =
+    def rec(list: Lst[A], n: Int = 0): Int =
+      list match
+        case Nil             => n
+        case Cns(head, tail) => rec(tail, n + 1)
+    rec(this)
+
+  def reverse: Lst[A] =
+    def rec[A](list: Lst[A], reversed: Lst[A] = Nil): Lst[A] =
+      list match
+        case Nil             => reversed
+        case Cns(head, tail) => rec(tail, Cns(head, reversed))
+    rec(this)
+
+  def getLeft: Lst[A] =
+    def rec[A](
+        list: Lst[A] = this,
+        len: Double = floor(this.len / 2),
+        n: Int = 0,
+        left: Lst[A] = Nil
+    ): Lst[A] =
+      if n < len then {
+        list match
+          case Nil             => left
+          case Cns(head, tail) => rec(tail, len, n + 1, Cns(head, left))
+      } else left
+    rec().reverse
+
+  def getRight: Lst[A] =
+    def rec[A](
+        list: Lst[A] = this,
+        len: Double = floor(this.len / 2),
+        n: Int = 0,
+        right: Lst[A] = Nil
+    ): Lst[A] =
+      if n < len then {
+        list match
+          case Nil             => right
+          case Cns(head, tail) => rec(tail, len, n + 1)
+      } else {
+        list match
+          case Nil             => right
+          case Cns(head, tail) => rec(tail, len, n + 1, Cns(head, right))
+      }
+    rec().reverse
+
+  def getHead: A =
+    this match
+      case Cns(head, tail) => head
+      case Nil             => throw new RuntimeException("NO HEAD!")
+
+  def getInits: Lst[Lst[A]] =
+    def rec[A](list: Lst[A], inits: Lst[Lst[A]] = Nil): Lst[Lst[A]] =
+      list match
+        case Nil => inits
+        case Cns(head, tail) =>
+          if inits != Nil then rec(tail, Cns(Cns(head, inits.getHead), inits))
+          else rec(tail, Cns(Cns(head, Nil), inits))
+    def rev[A](
+        list: Lst[Lst[A]] = rec(this),
+        reversed: Lst[Lst[A]] = Nil
+    ): Lst[Lst[A]] =
+      list match
+        case Nil             => reversed
+        case Cns(head, tail) => rev(tail, Cns(head.reverse, reversed))
+    rev()
+
+  def exists[A](
+      p: (A, A, A) => Boolean,
+      add: A,
+      eq: A,
+      list: Lst[A] = this
+  ): Boolean =
+    list match
+      case Nil => false
+      case Cns(head, tail) =>
+        if p(head, add, eq) then true else exists(p, add, eq, tail)
+
+  def mergeSort[A](p: (A, A) => Compared, list: Lst[A] = this): Lst[A] =
+    list match {
+      case Nil            => Nil
+      case Cns(head, Nil) => Lst(head)
+      case Cns(head, tail) => {
+        tail match
+          case Cns(hd, Nil) => {
+            if p(head, hd) == Compared("Gt") then Lst(head, hd)
+            else Lst(hd, head)
+          }
+          case Cns(hd, tl) => {
+            mergeSort(p, Lst(hd))
+            mergeSort(p, tl)
+          }
+      }
+    }
+
+object Lst {
+  def apply[A](list: A*): Lst[A] =
+    list.foldRight(Nil: Lst[A]) { case (head, tail) => Cns(head, tail) }
+}
+object Compared {
+  def apply(param: String): Compared =
+    param match
+      case "Lt" => Lt
+      case "Gt" => Gt
+      case _    => Eq
+}
+@main def main() =
+  println(
+    Lst(1, 2, 3, 4, 5, 6, 7).exists(
+      { (el: Int, add: Int, eq: Int) =>
+        if el + add == eq then true else false
+      },
+      1,
+      9
+    )
+  )
+  println(Lst(1, 2, 3, 4, 5, 6, 7).mergeSort({ (a: Int, b: Int) =>
+    if a > b then Compared("Gt")
+    else if a < b then Compared("Lt")
+    else Compared("Eq")
+  }))
