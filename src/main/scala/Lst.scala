@@ -8,7 +8,6 @@ enum Compared:
 enum Lst[+A]:
   case Nil
   case Cns(head: A, tail: Lst[A])
-
   override def toString: String =
     def rec(sb: StringBuilder, as: Lst[A]): String =
       as match
