@@ -87,7 +87,9 @@ enum Lst[+A]:
       list match
         case Nil             => reversed
         case Cns(head, tail) => rev(tail, Cns(head.reverse, reversed))
-    rev()
+    this match
+      case Nil => Lst(Lst())
+      case _   => rev()
 
   def exists[A](
       p: (A, A, A) => Boolean,
@@ -124,18 +126,3 @@ object Compared {
       case "Gt" => Gt
       case _    => Eq
 }
-@main def main() =
-  println(
-    Lst(1, 2, 3, 4, 5, 6, 7).exists(
-      { (el: Int, add: Int, eq: Int) =>
-        if el + add == eq then true else false
-      },
-      1,
-      9
-    )
-  )
-  println(Lst(4, 2, 5, 1, 3, 7, 8, 6).mergeSort({ (a: Int, b: Int) =>
-    if a > b then Compared("Gt")
-    else if a < b then Compared("Lt")
-    else Compared("Eq")
-  }))
