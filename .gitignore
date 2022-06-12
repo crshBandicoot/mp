@@ -3,3 +3,8 @@
 .idea/
 target/
 .bsp/
+.vscode/
+.metals/
+.bloop/
+*.conf
+.scalafmt.conf
