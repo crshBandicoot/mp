@@ -74,13 +74,13 @@ enum Lst[+A]:
       case Nil             => throw new RuntimeException("NO HEAD!")
 
   def getInits: Lst[Lst[A]] =
-    def rec[A](list: Lst[A], inits: Lst[Lst[A]] = Nil): Lst[Lst[A]] =
+    def rec(list: Lst[A], inits: Lst[Lst[A]] = Nil): Lst[Lst[A]] =
       list match
         case Nil => inits
         case Cns(head, tail) =>
           if inits != Nil then rec(tail, Cns(Cns(head, inits.getHead), inits))
           else rec(tail, Cns(Cns(head, Nil), inits))
-    def rev[A](
+    def rev(
         list: Lst[Lst[A]] = rec(this),
         reversed: Lst[Lst[A]] = Nil
     ): Lst[Lst[A]] =
@@ -97,23 +97,38 @@ enum Lst[+A]:
       eq: A,
       list: Lst[A] = this
   ): Boolean =
-    list match
-      case Nil => false
-      case Cns(head, tail) =>
-        if p(head, add, eq) then true else exists(p, add, eq, tail)
+    def rec(
+        p_f: (A, A, A) => Boolean,
+        add_f: A,
+        eq_f: A,
+        list_f: Lst[A] = list
+    ): Boolean =
+      list_f match
+        case Nil => false
+        case Cns(head, tail) =>
+          if p_f(head, add_f, eq_f) then true else rec(p_f, add_f, eq_f, tail)
+    rec(p, add, eq)
 
   def merge[A](left: Lst[A], right: Lst[A], p: (A, A) => Compared): Lst[A] =
-    (left, right) match
-      case (left, Nil)  => left
-      case (Nil, right) => right
-      case (Cns(leftH, leftT), Cns(rightH, rightT)) =>
-        if p(rightH, leftH) == Compared("Gt") then
-          Cns(leftH, merge(leftT, right, p))
-        else Cns(rightH, merge(left, rightT, p))
+    def rec(
+        left_f: Lst[A],
+        right_f: Lst[A],
+        p_f: (A, A) => Compared
+    ): Lst[A] =
+      (left_f, right_f) match
+        case (left_f, Nil)  => left_f
+        case (Nil, right_f) => right_f
+        case (Cns(leftH, leftT), Cns(rightH, rightT)) =>
+          if p_f(rightH, leftH) == Compared("Gt") then
+            Cns(leftH, rec(leftT, right_f, p_f))
+          else Cns(rightH, merge(left_f, rightT, p_f))
+    rec(left, right, p)
 
   def mergeSort[A](p: (A, A) => Compared, list: Lst[A] = this): Lst[A] =
-    if list.len == 0 || list.len == 1 then list
-    else { merge(mergeSort(p, list.getLeft), mergeSort(p, list.getRight), p) }
+    def rec(p_f: (A, A) => Compared, list_f: Lst[A] = list): Lst[A] =
+      if list_f.len == 0 || list_f.len == 1 then list_f
+      else { merge(rec(p, list_f.getLeft), rec(p, list_f.getRight), p_f) }
+    rec(p, list)
 
 object Lst {
   def apply[A](list: A*): Lst[A] =
