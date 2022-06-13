@@ -1,8 +1,7 @@
-package com.tkroman.kpi.y2022.l1
+package Lst
 import munit.FunSuite
 import Lst.*
 import Lst._
-import javax.management.RuntimeErrorException
 
 class LstTest extends FunSuite {
   test("getLeft on some") {

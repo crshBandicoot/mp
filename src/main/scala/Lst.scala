@@ -1,7 +1,5 @@
 package Lst
 import scala.math._
-import scala.compiletime.ops.string
-import scala.annotation.tailrec
 enum Compared:
   case Lt, Gt, Eq
 
