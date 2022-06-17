@@ -4,24 +4,14 @@ import Lst.*
 import Lst._
 
 class LstTest extends FunSuite {
-  test("getLeft on some") {
-    val expected = Lst(1, 2, 3)
-    val actual = Lst(1, 2, 3, 4, 5, 6, 7).getLeft
+  test("split on some") {
+    val expected = (Lst(1, 2, 3), Lst(4, 5, 6, 7))
+    val actual = Lst(1, 2, 3, 4, 5, 6, 7).split
     assertEquals(actual, expected)
   }
-  test("getLeft on empty") {
-    val expected = Lst()
-    val actual = Lst().getLeft
-    assertEquals(actual, expected)
-  }
-  test("getRight on some") {
-    val expected = Lst(4, 5, 6, 7)
-    val actual = Lst(1, 2, 3, 4, 5, 6, 7).getRight
-    assertEquals(actual, expected)
-  }
-  test("getRight on empty") {
-    val expected = Lst()
-    val actual = Lst().getRight
+  test("split on empty") {
+    val expected = (Lst(), Lst())
+    val actual = Lst().split
     assertEquals(actual, expected)
   }
   test("len on some") {
@@ -67,35 +57,25 @@ class LstTest extends FunSuite {
     assertEquals(expected, actual)
   }
   test("exists on some") {
-    val expected = false
-    val actual = Lst(1, 2, 3, 4, 5, 6, 7).exists(
-      { (el: Int, add: Int, eq: Int) =>
-        if el + add == eq then true else false
-      },
-      1,
-      9
-    )
+    val expected = true
+    val actual = Lst(1, 2, 3, 4, 5, 6, 7).exists({ (el: Int) =>
+      if el % 2 == 0 then true else false
+    })
     assertEquals(expected, actual)
   }
   test("exists on some") {
-    val expected = true
-    val actual = Lst(1, 2, 3, 4, 5, 6, 7).exists(
-      { (el: Int, add: Int, eq: Int) =>
-        if el + add == eq then true else false
-      },
-      1,
-      8
-    )
+    val expected = false
+    val actual = Lst(1, 3, 5, 7).exists({ (el: Int) =>
+      if el % 2 == 0 then true else false
+    })
     assertEquals(expected, actual)
   }
   test("exists on empty") {
-    val expected = false
-    val actual = Lst(1, 2, 3, 4, 5, 6, 7).exists(
-      { (el: Int, add: Int, eq: Int) =>
-        if el + add == eq then true else false
-      },
-      1,
-      9
+    val expected = true
+    val actual = Lst(1, 2, 3, 5, 7).exists(
+      { (el: Int) =>
+        if el % 2 == 0 then true else false
+      }
     )
     assertEquals(expected, actual)
   }
@@ -112,18 +92,18 @@ class LstTest extends FunSuite {
       21, 96, 41, 82, 34, 26, 67, 55, 94, 32, 6, 29, 2, 18, 5, 87, 51, 75, 7,
       11, 60, 79, 69, 1, 14, 10, 20, 92, 50, 57, 0, 88, 13, 35, 59, 28, 38, 17,
       93, 37, 48, 27, 4, 65, 49, 61, 81, 30).mergeSort({ (a: Int, b: Int) =>
-      if a > b then Compared("Gt")
-      else if a < b then Compared("Lt")
-      else Compared("Eq")
+      if a > b then Compared.Gt
+      else if a < b then Compared.Lt
+      else Compared.Eq
     })
     assertEquals(expected, actual)
   }
   test("mergeSort on empty") {
     val expected = Lst()
     val actual = Lst().mergeSort({ (a: Int, b: Int) =>
-      if a > b then Compared("Gt")
-      else if a < b then Compared("Lt")
-      else Compared("Eq")
+      if a > b then Compared.Gt
+      else if a < b then Compared.Lt
+      else Compared.Eq
     })
     assertEquals(expected, actual)
   }

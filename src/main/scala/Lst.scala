@@ -34,37 +34,24 @@ enum Lst[+A]:
         case Cns(head, tail) => rec(tail, Cns(head, reversed))
     rec(this)
 
-  def getLeft: Lst[A] =
+  def split: (Lst[A], Lst[A]) =
     def rec[A](
         list: Lst[A] = this,
-        len: Double = floor(this.len / 2),
+        mid: Double = floor(this.len / 2),
         n: Int = 0,
-        left: Lst[A] = Nil
-    ): Lst[A] =
-      if n < len then {
-        list match
-          case Nil             => left
-          case Cns(head, tail) => rec(tail, len, n + 1, Cns(head, left))
-      } else left
-    rec().reverse
-
-  def getRight: Lst[A] =
-    def rec[A](
-        list: Lst[A] = this,
-        len: Double = floor(this.len / 2),
-        n: Int = 0,
+        left: Lst[A] = Nil,
         right: Lst[A] = Nil
-    ): Lst[A] =
-      if n < len then {
+    ): (Lst[A], Lst[A]) =
+      if n < mid then {
         list match
-          case Nil             => right
-          case Cns(head, tail) => rec(tail, len, n + 1)
+          case Nil             => (left.reverse, right.reverse)
+          case Cns(head, tail) => rec(tail, mid, n + 1, Cns(head, left), right)
       } else {
         list match
-          case Nil             => right
-          case Cns(head, tail) => rec(tail, len, n + 1, Cns(head, right))
+          case Nil             => (left.reverse, right.reverse)
+          case Cns(head, tail) => rec(tail, mid, n + 1, left, Cns(head, right))
       }
-    rec().reverse
+    rec()
 
   def getHead: A =
     this match
@@ -90,52 +77,50 @@ enum Lst[+A]:
       case _   => rev()
 
   def exists[A](
-      p: (A, A, A) => Boolean,
-      add: A,
-      eq: A,
-      list: Lst[A] = this
+      predicate: (A) => Boolean,
+      mylist: Lst[A] = this
   ): Boolean =
     def rec(
-        p_f: (A, A, A) => Boolean,
-        add_f: A,
-        eq_f: A,
-        list_f: Lst[A] = list
+        func: (A) => Boolean,
+        list: Lst[A] = mylist
     ): Boolean =
-      list_f match
+      list match
         case Nil => false
         case Cns(head, tail) =>
-          if p_f(head, add_f, eq_f) then true else rec(p_f, add_f, eq_f, tail)
-    rec(p, add, eq)
+          if func(head) then true else rec(func, tail)
+    rec(predicate)
 
-  def merge[A](left: Lst[A], right: Lst[A], p: (A, A) => Compared): Lst[A] =
+  def merge[A](l: Lst[A], r: Lst[A], comparator: (A, A) => Compared): Lst[A] =
     def rec(
-        left_f: Lst[A],
-        right_f: Lst[A],
-        p_f: (A, A) => Compared
+        left: Lst[A],
+        right: Lst[A],
+        comp: (A, A) => Compared
     ): Lst[A] =
-      (left_f, right_f) match
-        case (left_f, Nil)  => left_f
-        case (Nil, right_f) => right_f
-        case (Cns(leftH, leftT), Cns(rightH, rightT)) =>
-          if p_f(rightH, leftH) == Compared("Gt") then
-            Cns(leftH, rec(leftT, right_f, p_f))
-          else Cns(rightH, merge(left_f, rightT, p_f))
-    rec(left, right, p)
+      (left, right) match
+        case (left, Nil)  => left
+        case (Nil, right) => right
+        case (Cns(leftHead, leftTail), Cns(rightHead, rightTail)) =>
+          if comp(rightHead, leftHead) == Compared.Gt then
+            Cns(leftHead, rec(leftTail, right, comp))
+          else Cns(rightHead, merge(left, rightTail, comp))
+    rec(l,r, comparator)
 
-  def mergeSort[A](p: (A, A) => Compared, list: Lst[A] = this): Lst[A] =
-    def rec(p_f: (A, A) => Compared, list_f: Lst[A] = list): Lst[A] =
-      if list_f.len == 0 || list_f.len == 1 then list_f
-      else { merge(rec(p, list_f.getLeft), rec(p, list_f.getRight), p_f) }
-    rec(p, list)
+  def mergeSort[A](
+      comparator: (A, A) => Compared,
+      mylist: Lst[A] = this
+  ): Lst[A] =
+    def rec(comp: (A, A) => Compared, list: Lst[A] = mylist): Lst[A] =
+      if list.len == 0 || list.len == 1 then list
+      else {
+        val (left, right) = list.split
+        merge(rec(comp, left), rec(comp, right), comp)
+      }
+    rec(comparator)
 
 object Lst {
   def apply[A](list: A*): Lst[A] =
     list.foldRight(Nil: Lst[A]) { case (head, tail) => Cns(head, tail) }
 }
-object Compared {
-  def apply(param: String): Compared =
-    param match
-      case "Lt" => Lt
-      case "Gt" => Gt
-      case _    => Eq
-}
+
+@main def run() =
+  println(Lst(1, 2, 3, 4, 5).split)
