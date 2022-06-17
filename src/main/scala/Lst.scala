@@ -121,6 +121,3 @@ object Lst {
   def apply[A](list: A*): Lst[A] =
     list.foldRight(Nil: Lst[A]) { case (head, tail) => Cns(head, tail) }
 }
-
-@main def run() =
-  println(Lst(1, 2, 3, 4, 5).split)
